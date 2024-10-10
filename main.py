@@ -17,6 +17,8 @@ def main():
         title = prod.find(class_="item-title").find("a")
         print(f"Title: {title.text}")
 
+        link = title["href"]
+
         price_span = (prod.find(class_="item-price")
                       .find(class_="special-price"))
         if price_span is None:
@@ -25,6 +27,15 @@ def main():
 
         price = price_span.find(class_="price")
         print(f"Price: {price.text}")
+
+        res = requests.get(link)
+        if res.status_code != 200:
+            print("Error getting product information")
+            continue
+
+        prod_page = BeautifulSoup(res.text, "html.parser")
+        warranty = prod_page.find(class_="product-warranty").find("span")
+        print(f"Warranty: {warranty.text}")
 
 
 if __name__ == "__main__":
