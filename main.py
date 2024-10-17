@@ -1,5 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
+from functools import reduce
+from datetime import datetime, timezone
 
 
 def process_product(prod):
@@ -44,6 +46,14 @@ def process_product(prod):
     }
 
 
+def add_eur(prod, rate):
+    if prod["price"] is not None:
+        prod["price_eur"] = prod["price"] * rate
+    else:
+        prod["price_eur"] = None
+    return prod
+
+
 def main():
     url = "https://nanoteh.md/en/computers-servers-parts/monitors-displays-screens/"
     res = requests.get(url)
@@ -62,14 +72,25 @@ def main():
         except Exception as e:
             print(f"Error: {e}. Skipping...")
 
+    # requests.get("https://open.er-api.com/v6/latest/MDL").json()["rates"]["EUR"]
+    rate = 1/20
+    product_info = filter(
+        lambda p: p["price"] is not None and p["price"] < 2000,
+        product_info)
+    product_info = list(map(lambda p: add_eur(p, rate), product_info))
+    price_sum = reduce(lambda col, cur: col + cur["price"], product_info, 0)
+    timestamp = datetime.now(timezone.utc)
     for i in product_info:
         print(20*"=", "\n")
 
         print("Name: ", i["title"])
-        print("Price: ", i["price"])
+        print("Price (MDL): ", i["price"])
+        print("Price (EUR): ", i["price_eur"])
         print("Warranty: ", i["warranty"])
 
         print("\n")
+    print(f"Sum: {price_sum} MDL")
+    print(f"Time: {timestamp}")
 
 
 if __name__ == "__main__":
