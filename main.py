@@ -6,6 +6,42 @@ import json
 import socket
 
 
+def to_json(prod_info):
+    print(f"""{{
+    "sum": {prod_info['sum']},
+    "timestamp": "{prod_info['timestamp']}",
+    "products": [
+        {','.join([f"""
+        {{
+            "name": "{p['name']}",
+            "price_mdl": {p['price']},
+            "price_eur": {p['price_eur']},
+            "warranty": {p['warranty']}
+        }}"""
+          for p in prod_info['products']
+                   ])}
+    ]
+}}""")
+
+
+def to_xml(prod_info):
+    print(f"""<product_info>
+    <sum> {prod_info['sum']} </sum>
+    <timestamp> {prod_info['timestamp']} </timestamp>
+    <products>
+        {'\n'.join([f"""
+        <product>
+            <name> {p['name']} </name>
+            <price_mdl> {p['price']} </price_mdl>
+            <price_eur> {p['price_eur']} </price_eur>
+            <warranty> {p['warranty']} </warranty>
+        </product>"""
+          for p in prod_info['products']
+                    ])}
+    </products>
+</product_info>""")
+
+
 def request(url):
     host, path = url.replace("https://", "").split("/", 1)
     port = 443
@@ -69,7 +105,7 @@ def process_product(prod):
             title}"')
 
     return {
-        "title": title,
+        "name": title,
         "price": price,
         "warranty": warranty
     }
@@ -90,34 +126,41 @@ def main():
     s = BeautifulSoup(res, "html.parser")
     prods = s.find(class_="products-grid").find_all(class_="item-info")
 
-    product_info = []
+    product_info = {
+        "products": []
+    }
 
     for prod in prods:
         try:
-            product_info.append(process_product(prod))
+            product_info["products"].append(process_product(prod))
         except Exception as e:
             print(f"Error: {e}. Skipping...")
 
     # rate = json.loads(
         # request("https://open.er-api.com/v6/latest/MDL"))["rates"]["EUR"]
     rate = 1/20
-    product_info = filter(
+    product_info["products"] = filter(
         lambda p: p["price"] is not None and p["price"] < 2000,
-        product_info)
-    product_info = list(map(lambda p: add_eur(p, rate), product_info))
-    price_sum = reduce(lambda col, cur: col + cur["price"], product_info, 0)
-    timestamp = datetime.now(timezone.utc)
-    for i in product_info:
+        product_info["products"])
+    product_info["products"] = list(
+        map(lambda p: add_eur(p, rate), product_info["products"]))
+    product_info["sum"] = reduce(
+        lambda col, cur: col + cur["price"], product_info["products"], 0)
+    product_info["timestamp"] = datetime.now(timezone.utc)
+
+    for i in product_info["products"]:
         print(20*"=", "\n")
 
-        print("Name: ", i["title"])
+        print("Name: ", i["name"])
         print("Price (MDL): ", i["price"])
         print("Price (EUR): ", i["price_eur"])
         print("Warranty: ", i["warranty"])
 
         print("\n")
-    print(f"Sum: {price_sum} MDL")
-    print(f"Time: {timestamp}")
+    print(f"Sum: {product_info['sum']} MDL")
+    print(f"Time: {product_info['timestamp']}")
+    to_json(product_info)
+    to_xml(product_info)
 
 
 if __name__ == "__main__":
