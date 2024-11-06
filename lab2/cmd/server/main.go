@@ -13,6 +13,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"communicator/handlers/fileupload"
 	"communicator/handlers/moviecrud"
 )
 
@@ -23,10 +24,11 @@ func main() {
 	// }
 
 	movieCRUDGroup := moviecrud.HandlerGroup{}
-	movieCRUDMux := movieCRUDGroup.Mux()
+	fileUploadGroup := fileupload.HandlerGroup{}
 
 	serverMux := http.NewServeMux()
-	serverMux.Handle("/crud", movieCRUDMux)
+	serverMux.Handle("/crud", movieCRUDGroup.Mux())
+	serverMux.Handle("/file", fileUploadGroup.Mux())
 
 	server := http.Server{
 		Addr:    "0.0.0.0:8080",
