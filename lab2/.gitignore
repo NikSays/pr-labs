@@ -1,0 +1,15 @@
+*
+
+!/.gitignore
+
+!*.go
+!/go.mod
+!/go.sum
+
+!/config/example.env
+
+!/Dockerfile
+
+!/README.md
+
+!*/
