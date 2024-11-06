@@ -72,9 +72,8 @@ def main():
         except Exception as e:
             print(f"Error: {e}. Skipping...")
 
-    # rate = json.loads(
-        # request("https://open.er-api.com/v6/latest/MDL"))["rates"]["EUR"]
-    rate = 1/20
+    rate = json.loads(
+        request("https://open.er-api.com/v6/latest/MDL"))["rates"]["EUR"]
 
     product_info["products"] = filter(
         lambda p: p["price"] is not None and p["price"] < 2000,
