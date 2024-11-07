@@ -15,6 +15,7 @@ import (
 
 	"communicator/handlers/fileupload"
 	"communicator/handlers/moviecrud"
+	"communicator/handlers/ws"
 )
 
 func main() {
@@ -26,13 +27,21 @@ func main() {
 	movieCRUDGroup := moviecrud.HandlerGroup{}
 	fileUploadGroup := fileupload.HandlerGroup{}
 
-	serverMux := http.NewServeMux()
-	serverMux.Handle("/crud", movieCRUDGroup.Mux())
-	serverMux.Handle("/file", fileUploadGroup.Mux())
+	httpMux := http.NewServeMux()
+	httpMux.Handle("/crud", movieCRUDGroup.Mux())
+	httpMux.Handle("/file", fileUploadGroup.Mux())
 
-	server := http.Server{
+	httpServer := http.Server{
 		Addr:    "0.0.0.0:8080",
-		Handler: serverMux,
+		Handler: httpMux,
+	}
+
+	wsGroup := ws.NewHandlerGroup()
+	wsMux := wsGroup.Mux()
+
+	wsServer := http.Server{
+		Addr:    "0.0.0.0:8081",
+		Handler: wsMux,
 	}
 
 	sig := make(chan os.Signal, 1)
@@ -45,8 +54,18 @@ func main() {
 	})
 
 	eg.Go(func() error {
-		err := server.ListenAndServe()
-		return fmt.Errorf("serve moviecrud: %w", err)
+		err := httpServer.ListenAndServe()
+		return fmt.Errorf("serve http: %w", err)
+	})
+
+	eg.Go(func() error {
+		err := wsServer.ListenAndServe()
+		return fmt.Errorf("serve ws: %w", err)
+	})
+
+	eg.Go(func() error {
+		err := wsGroup.HandleMessages(ctx)
+		return fmt.Errorf("handle ws messages: %w", err)
 	})
 
 	eg.Go(func() error {
@@ -54,10 +73,16 @@ func main() {
 		log.Println("Stopping")
 
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), time.Minute)
-		err := server.Shutdown(cleanupCtx)
+		err := httpServer.Shutdown(cleanupCtx)
 		if err != nil {
-			log.Print("Error closing server: ", err)
+			log.Print("Error closing http server: ", err)
 		}
+
+		err = wsServer.Shutdown(cleanupCtx)
+		if err != nil {
+			log.Print("Error closing ws server: ", err)
+		}
+
 		cancel()
 		return nil
 	})
