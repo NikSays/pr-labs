@@ -1,0 +1,29 @@
+version: "3.6"
+
+services:
+  server:
+    build: .
+    container_name: server
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+      - "8082:8082"
+    environment:
+      - DB_HOST=postgres
+      - DB_DATABASE=lab
+      - DB_USERNAME=lab_user
+      - DB_PASSWORD=lab_pass
+
+      - UP_DIRECTORY=/opt/upload
+
+      - TCP_FILEPATH=/opt/tcp/tcp.txt
+    volumes:
+      - ./data:/opt
+
+  postgres:
+    image: postgres:14-alpine
+    container_name: postgres
+    environment:
+      - POSTGRES_PASSWORD=lab_pass
+      - POSTGRES_USER=lab_user
+      - POSTGRES_DB=lab

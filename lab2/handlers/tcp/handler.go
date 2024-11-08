@@ -49,7 +49,14 @@ func (s *Server) HandleRequest(conn net.Conn) {
 			return
 		}
 	case "w":
-		err := os.WriteFile(s.FilePath, []byte(text), 0o666)
+		f, err := os.Create(s.FilePath)
+		if err != nil {
+			log.Print(err)
+			_, _ = conn.Write([]byte("Can't create file"))
+			return
+		}
+
+		_, err = f.Write([]byte(text))
 		if err != nil {
 			log.Print(err)
 			_, _ = conn.Write([]byte("Can't write file"))
