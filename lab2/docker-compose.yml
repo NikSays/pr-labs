@@ -28,4 +28,4 @@ services:
       - POSTGRES_USER=lab_user
       - POSTGRES_DB=lab
     volumes:
-      - ./db:/var/lib/postgresql/data
+      - ./data/db:/var/lib/postgresql/data

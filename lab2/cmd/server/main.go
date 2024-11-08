@@ -23,11 +23,13 @@ import (
 )
 
 func main() {
+	// Load config
 	conf, err := config.FromEnv()
 	if err != nil {
 		log.Fatal("Load config from environment:", err)
 	}
 
+	// Prepare dependencies
 	dbConn, err := db.NewClient(db.Config{
 		Host:     conf.DB.Host,
 		Database: conf.DB.Database,
@@ -45,8 +47,9 @@ func main() {
 		Directory: conf.Upload.Directory,
 	}
 
+	// Set up routing
 	httpMux := http.NewServeMux()
-	httpMux.Handle("/crud/", http.StripPrefix("/crud", movieCRUDGroup.Mux()))
+	httpMux.Handle("/movie/", http.StripPrefix("/movie", movieCRUDGroup.Mux()))
 	httpMux.Handle("/file/", http.StripPrefix("/file", fileUploadGroup.Mux()))
 
 	httpServer := http.Server{
@@ -72,8 +75,11 @@ func main() {
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
+
+	// Error group. An easy way of creating threads with error handling
 	eg, ctx := errgroup.WithContext(context.Background())
 
+	// Handle signals
 	eg.Go(func() error {
 		<-sig
 		return errors.New("received sigterm")
@@ -104,6 +110,7 @@ func main() {
 		}
 	})
 
+	// Cleanup after a thread has returned an error
 	eg.Go(func() error {
 		<-ctx.Done()
 		log.Println("Stopping")

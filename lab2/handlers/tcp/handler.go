@@ -20,9 +20,10 @@ type Server struct {
 func (s *Server) HandleRequest(conn net.Conn) {
 	defer conn.Close()
 
-	// incoming request
 	scanner := bufio.NewScanner(conn)
+	// Skip first newline
 	scanner.Scan()
+	// Read upto newline
 	msg := scanner.Text()
 	cmd, text, _ := strings.Cut(msg, " ")
 	if cmd != "r" && cmd != "w" {
@@ -30,6 +31,7 @@ func (s *Server) HandleRequest(conn net.Conn) {
 		return
 	}
 
+	// Wait for other thread to finish working
 	_, err := conn.Write([]byte("Waiting for lock\n"))
 	if err != nil {
 		log.Print(err)
@@ -38,6 +40,7 @@ func (s *Server) HandleRequest(conn net.Conn) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// Simulate delay
 	rndSleep := rand.Intn(7) + 1
 	_, err = conn.Write([]byte(fmt.Sprintf("Waiting %d seconds\n", rndSleep)))
 	if err != nil {

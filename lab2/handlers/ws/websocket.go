@@ -29,6 +29,7 @@ func (g *HandlerGroup) handleConnections(w http.ResponseWriter, r *http.Request)
 	g.clients[conn] = true
 
 	for {
+		// Handle received message
 		var msg Message
 		err := conn.ReadJSON(&msg)
 		if msg.Message == "/leave" || err != nil {
@@ -46,6 +47,7 @@ func (g *HandlerGroup) HandleMessages(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case msg := <-g.broadcast:
+			// Send to all clients
 			for client := range g.clients {
 				err := client.WriteJSON(msg)
 				if err != nil {

@@ -6,6 +6,7 @@ import (
 	"github.com/caarlos0/env/v10"
 )
 
+// FromEnv parses config from env vars into a struct
 func FromEnv() (Conf, error) {
 	var config Conf
 	err := env.Parse(&config)
@@ -28,6 +29,7 @@ type DB struct {
 	Username string `env:"DB_USERNAME,notEmpty"`
 	Password string `env:"DB_PASSWORD,notEmpty"`
 }
+
 type Upload struct {
 	Directory string `env:"UP_DIRECTORY,notEmpty"`
 }
