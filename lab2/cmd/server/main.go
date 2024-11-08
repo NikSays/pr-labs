@@ -46,8 +46,8 @@ func main() {
 	}
 
 	httpMux := http.NewServeMux()
-	httpMux.Handle("/crud", movieCRUDGroup.Mux())
-	httpMux.Handle("/file", fileUploadGroup.Mux())
+	httpMux.Handle("/crud/", http.StripPrefix("/crud", movieCRUDGroup.Mux()))
+	httpMux.Handle("/file/", http.StripPrefix("/file", fileUploadGroup.Mux()))
 
 	httpServer := http.Server{
 		Addr:    "0.0.0.0:8080",

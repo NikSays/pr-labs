@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"math/rand"
 	"net"
@@ -21,46 +22,55 @@ func (s *Server) HandleRequest(conn net.Conn) {
 
 	// incoming request
 	scanner := bufio.NewScanner(conn)
+	scanner.Scan()
 	msg := scanner.Text()
 	cmd, text, _ := strings.Cut(msg, " ")
 	if cmd != "r" && cmd != "w" {
-		_, _ = conn.Write([]byte("Invalid command"))
+		_, _ = conn.Write([]byte("Invalid command\n"))
 		return
 	}
 
-	rndSleep := rand.Intn(7) + 1
-	time.Sleep(time.Duration(rndSleep))
-
+	_, err := conn.Write([]byte("Waiting for lock\n"))
+	if err != nil {
+		log.Print(err)
+		return
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	rndSleep := rand.Intn(7) + 1
+	_, err = conn.Write([]byte(fmt.Sprintf("Waiting %d seconds\n", rndSleep)))
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	time.Sleep(time.Duration(rndSleep) * time.Second)
 
 	switch cmd {
 	case "r":
 		f, err := os.ReadFile(s.FilePath)
 		if err != nil {
 			log.Print(err)
-			_, _ = conn.Write([]byte("Can't read file"))
+			_, _ = conn.Write([]byte("Can't read file\n"))
 			return
 		}
-		_, err = conn.Write(f)
+		_, err = conn.Write(append(f, '\n'))
 		if err != nil {
 			log.Print(err)
-			_, _ = conn.Write([]byte("Can't read file"))
 			return
 		}
 	case "w":
-		f, err := os.Create(s.FilePath)
+		err := os.WriteFile(s.FilePath, []byte(text), 0o666)
 		if err != nil {
 			log.Print(err)
-			_, _ = conn.Write([]byte("Can't create file"))
+			_, _ = conn.Write([]byte("Can't write file\n"))
 			return
 		}
+	}
 
-		_, err = f.Write([]byte(text))
-		if err != nil {
-			log.Print(err)
-			_, _ = conn.Write([]byte("Can't write file"))
-			return
-		}
+	_, err = conn.Write([]byte("Success\n"))
+	if err != nil {
+		log.Print(err)
+		return
 	}
 }

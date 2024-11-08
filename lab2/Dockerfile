@@ -1,7 +1,4 @@
-FROM docker.io/golang:1.22-alpine AS builder
-
-
-RUN apk add --no-cache ca-certificates
+FROM docker.io/golang:1.23-alpine AS builder
 
 WORKDIR /app
 COPY go.mod go.sum ./
@@ -12,5 +9,4 @@ RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w" -o /server /app
 
 FROM scratch
 COPY --from=builder /server /
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 ENTRYPOINT ["/server"]

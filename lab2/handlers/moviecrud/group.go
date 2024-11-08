@@ -16,7 +16,7 @@ func (g *HandlerGroup) Mux() *http.ServeMux {
 	mux.HandleFunc("POST /", g.create)
 	mux.HandleFunc("GET /", g.read)
 	mux.HandleFunc("PUT /{id}", g.update)
-	mux.HandleFunc("DELETE /{id}", g.update)
+	mux.HandleFunc("DELETE /{id}", g.delete)
 
 	return mux
 }
