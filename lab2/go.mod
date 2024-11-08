@@ -3,6 +3,8 @@ module communicator
 go 1.22
 
 require (
+	github.com/caarlos0/env/v10 v10.0.0
+	github.com/gorilla/websocket v1.4.2
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/pressly/goose/v3 v3.22.1
 	github.com/sqlc-dev/sqlc v1.27.0

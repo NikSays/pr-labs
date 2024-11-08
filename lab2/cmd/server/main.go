@@ -14,6 +14,8 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"communicator/config"
+	"communicator/connections/db"
 	"communicator/handlers/fileupload"
 	"communicator/handlers/moviecrud"
 	"communicator/handlers/tcp"
@@ -21,13 +23,27 @@ import (
 )
 
 func main() {
-	// conf, err := config.FromEnv()
-	// if err != nil {
-	// 	log.Fatal("Load config from environment:", err)
-	// }
+	conf, err := config.FromEnv()
+	if err != nil {
+		log.Fatal("Load config from environment:", err)
+	}
 
-	movieCRUDGroup := moviecrud.HandlerGroup{}
-	fileUploadGroup := fileupload.HandlerGroup{}
+	dbConn, err := db.NewClient(db.Config{
+		Host:     conf.DB.Host,
+		Database: conf.DB.Database,
+		Username: conf.DB.Username,
+		Password: conf.DB.Password,
+	})
+	if err != nil {
+		log.Fatalf("connect to db: %s", err)
+	}
+
+	movieCRUDGroup := moviecrud.HandlerGroup{
+		Database: dbConn,
+	}
+	fileUploadGroup := fileupload.HandlerGroup{
+		Directory: conf.Upload.Directory,
+	}
 
 	httpMux := http.NewServeMux()
 	httpMux.Handle("/crud", movieCRUDGroup.Mux())
@@ -46,10 +62,12 @@ func main() {
 		Handler: wsMux,
 	}
 
-	tcpServer := tcp.Server{}
+	tcpServer := tcp.Server{
+		FilePath: conf.TCP.FilePath,
+	}
 	tcpListener, err := net.Listen("tcp", "0.0.0.0:8082")
 	if err != nil {
-		log.Fatalf("licten on 8082: %w", err)
+		log.Fatalf("licten on 8082: %s", err)
 	}
 
 	sig := make(chan os.Signal, 1)

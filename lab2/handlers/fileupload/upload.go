@@ -10,7 +10,7 @@ import (
 )
 
 type HandlerGroup struct {
-	FilePath string
+	Directory string
 }
 
 func (g *HandlerGroup) Mux() *http.ServeMux {
@@ -42,14 +42,14 @@ func (h *HandlerGroup) upload(rw http.ResponseWriter, req *http.Request) {
 
 	// Create the uploads folder if it doesn't
 	// already exist
-	err = os.MkdirAll(h.FilePath, 0o755)
+	err = os.MkdirAll(h.Directory, 0o755)
 	if err != nil {
 		http.Error(rw, fmt.Sprint("create directory: ", err), http.StatusInternalServerError)
 		return
 	}
 
 	// Create a new file in the uploads directory
-	dst, err := os.Create(filepath.Join(h.FilePath, name))
+	dst, err := os.Create(filepath.Join(h.Directory, name))
 	if err != nil {
 		http.Error(rw, fmt.Sprint("create file: ", err), http.StatusInternalServerError)
 		return

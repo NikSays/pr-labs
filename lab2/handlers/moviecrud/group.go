@@ -7,7 +7,7 @@ import (
 )
 
 type HandlerGroup struct {
-	Database db.Queries
+	Database *db.Queries
 }
 
 func (g *HandlerGroup) Mux() *http.ServeMux {
