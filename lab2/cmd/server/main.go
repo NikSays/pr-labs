@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,6 +16,7 @@ import (
 
 	"communicator/handlers/fileupload"
 	"communicator/handlers/moviecrud"
+	"communicator/handlers/tcp"
 	"communicator/handlers/ws"
 )
 
@@ -44,6 +46,12 @@ func main() {
 		Handler: wsMux,
 	}
 
+	tcpServer := tcp.Server{}
+	tcpListener, err := net.Listen("tcp", "0.0.0.0:8082")
+	if err != nil {
+		log.Fatalf("licten on 8082: %w", err)
+	}
+
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
 	eg, ctx := errgroup.WithContext(context.Background())
@@ -69,6 +77,16 @@ func main() {
 	})
 
 	eg.Go(func() error {
+		for {
+			conn, err := tcpListener.Accept()
+			if err != nil {
+				return fmt.Errorf("accept tcp connection: %w", err)
+			}
+			go tcpServer.HandleRequest(conn)
+		}
+	})
+
+	eg.Go(func() error {
 		<-ctx.Done()
 		log.Println("Stopping")
 
@@ -83,10 +101,14 @@ func main() {
 			log.Print("Error closing ws server: ", err)
 		}
 
+		err = tcpListener.Close()
+		if err != nil {
+			log.Print("Error closing tcp server: ", err)
+		}
 		cancel()
 		return nil
 	})
 
-	err := eg.Wait()
+	err = eg.Wait()
 	log.Println("Stop reason:", err)
 }

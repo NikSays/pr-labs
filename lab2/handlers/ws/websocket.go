@@ -2,7 +2,7 @@ package ws
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -22,7 +22,7 @@ type Message struct {
 func (g *HandlerGroup) handleConnections(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Println(err)
+		log.Print(err)
 		return
 	}
 	defer conn.Close()
@@ -49,7 +49,7 @@ func (g *HandlerGroup) HandleMessages(ctx context.Context) error {
 			for client := range g.clients {
 				err := client.WriteJSON(msg)
 				if err != nil {
-					fmt.Println(err)
+					log.Print(err)
 					client.Close()
 					delete(g.clients, client)
 				}
