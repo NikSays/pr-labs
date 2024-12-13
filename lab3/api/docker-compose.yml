@@ -1,0 +1,26 @@
+services:
+  server:
+    build: .
+    container_name: server
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=postgres
+      - DB_DATABASE=lab
+      - DB_USERNAME=lab_user
+      - DB_PASSWORD=lab_pass
+
+    volumes:
+      - ./data:/opt
+
+  postgres:
+    image: postgres:14-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=lab_pass
+      - POSTGRES_USER=lab_user
+      - POSTGRES_DB=lab
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
