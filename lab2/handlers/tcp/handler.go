@@ -13,7 +13,7 @@ import (
 )
 
 type Server struct {
-	mu       sync.Mutex
+	mu       sync.RWMutex
 	FilePath string
 }
 
