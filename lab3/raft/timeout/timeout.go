@@ -1,4 +1,4 @@
-package main
+package timeout
 
 import (
 	"math/rand"
@@ -10,6 +10,6 @@ const (
 	electionTimeoutMax = 6000 * time.Millisecond
 )
 
-func randomElectionTimeout() time.Duration {
+func RandomElectionTimeout() time.Duration {
 	return time.Duration(rand.Int63n(int64(electionTimeoutMax-electionTimeoutMin))) + electionTimeoutMin
 }
